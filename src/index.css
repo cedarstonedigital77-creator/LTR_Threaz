@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-void:   #0A0A0A;
+  --color-chalk:  #F5F0E8;
+  --color-blush:  #F2A7C3;
+  --color-lemon:  #E8F542;
+  --color-grape:  #7B4FD4;
+  --color-grain:  #C8B89A;
+  --ease-out-expo:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-circ: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-brutalist:   cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0A0A0A;
+  color: #F5F0E8;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  cursor: none;
+  overflow-x: hidden;
+}
+
+/* On touch devices: restore default cursor, keep scrolling smooth */
+@media (pointer: coarse) {
+  body { cursor: auto; }
+  * { cursor: auto !important; }
+  html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+}
+
+body.preloader-active { overflow: hidden; }
+
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.marquee-left  { animation: marquee-left  35s linear infinite; }
+.marquee-right { animation: marquee-right 28s linear infinite; }
+.marquee-pause:hover .marquee-left,
+.marquee-pause:hover .marquee-right {
+  animation-play-state: paused;
+}
+
+@keyframes grain-shift {
+  0%   { background-position: 0px 0px; }
+  25%  { background-position: -50px 30px; }
+  50%  { background-position: 20px -40px; }
+  75%  { background-position: -30px -20px; }
+  100% { background-position: 0px 0px; }
+}
+
+@keyframes preloader-snap {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes preloader-curtain {
+  from { clip-path: inset(0 0 0% 0); }
+  to   { clip-path: inset(100% 0 0% 0); }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes letter-drop {
+  from { opacity: 0; transform: translateY(-48px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Hero card entrance ── */
+@keyframes hero-card-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.94); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ── COMING SOON 3D ── */
+@keyframes cs-ring-spin {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+@keyframes cs-float-a {
+  0%, 100% { transform: translateY(0px) rotateZ(0deg); }
+  50%      { transform: translateY(-18px) rotateZ(4deg); }
+}
+@keyframes cs-float-b {
+  0%, 100% { transform: translateY(0px) rotateZ(0deg); }
+  50%      { transform: translateY(14px) rotateZ(-3deg); }
+}
+@keyframes cs-glow-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.2); }
+}
+@keyframes cs-scan-line {
+  0%   { top: -4px; }
+  100% { top: 100%; }
+}
+@keyframes cs-flicker {
+  0%, 93%, 100% { opacity: 1; }
+  94%           { opacity: 0.15; }
+  95%           { opacity: 1; }
+  97%           { opacity: 0.4; }
+  98%           { opacity: 1; }
+}
+@keyframes cs-text-glow {
+  0%, 100% { text-shadow:
+    1px 1px 0 #E8F542, 2px 2px 0 #E8F542,
+    3px 3px 0 #F2A7C3, 4px 4px 0 #F2A7C3,
+    5px 5px 0 #7B4FD4, 6px 6px 0 #7B4FD4,
+    7px 7px 16px rgba(232,245,66,0.25); }
+  50% { text-shadow:
+    1px 1px 0 #E8F542, 2px 2px 0 #E8F542,
+    3px 3px 0 #F2A7C3, 4px 4px 0 #F2A7C3,
+    5px 5px 0 #7B4FD4, 6px 6px 0 #7B4FD4,
+    7px 7px 32px rgba(232,245,66,0.55); }
+}
+@keyframes cs-orbit-cw {
+  from { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); }
+}
+@keyframes cs-orbit-ccw {
+  from { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
+  to   { transform: rotate(-360deg) translateX(var(--orbit-r)) rotate(360deg); }
+}
+@keyframes cs-card-enter {
+  from { opacity: 0; transform: translateZ(-60px); }
+  to   { opacity: 1; transform: translateZ(0); }
+}
+
+/* Focus styles for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #E8F542;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-left, .marquee-right { animation: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
