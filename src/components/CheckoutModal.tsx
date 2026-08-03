@@ -160,7 +160,7 @@ export default function CheckoutModal({
   )
 
   const copyAcct = () => {
-    const value = form.country === 'lesotho' ? '56944303' : '63148027287'
+    const value = form.country === 'lesotho' ? '56944303' : '63218936590'
     navigator.clipboard.writeText(value).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2200)
@@ -652,7 +652,7 @@ export default function CheckoutModal({
                   : [
                       { label: 'Bank',           value: 'FNB' },
                       { label: 'Account Holder', value: 'Lerato Sehapi' },
-                      { label: 'Account Number', value: '63148027287', highlight: true },
+                      { label: 'Account Number', value: '63218936590', highlight: true },
                       { label: 'Branch Code',    value: '250655' },
                       { label: 'Amount',         value: `R${total}`, highlight: true },
                       { label: 'Reference',      value: orderRef, highlight: true },
@@ -776,7 +776,7 @@ export default function CheckoutModal({
                     : `${form.province} · ${form.address}`
                   const paymentMethod = form.country === 'lesotho'
                     ? 'M-Pesa — 56944303 (Malisebo Sehapi)'
-                    : 'EFT — FNB 63148027287 (Lerato Sehapi)'
+                    : 'EFT — FNB 63218936590 (Lerato Sehapi)'
 
                   // Send order to owner automatically via FormSubmit — customer cannot edit
                   try {

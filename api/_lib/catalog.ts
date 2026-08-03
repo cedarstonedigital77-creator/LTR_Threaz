@@ -49,6 +49,7 @@ export const CATALOG: Record<string, CatalogEntry> = {
   SP03: { name: 'Ghost Spider Cap (Pink)', price: 400 },
   SP04: { name: 'Harlem Spider Beanie (Red/Black)', price: 150 },
   SP05: { name: 'Halo Spider Beanie (Pink)', price: 150 },
+  SP06: { name: 'Bronx Spider Beanie (Black/Red)', price: 150 },
 }
 
 export const SHIPPING: Record<Country, number> = {

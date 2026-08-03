@@ -19,6 +19,7 @@ const SPIDER_PIECES: SpiderPiece[] = [
   // Beanies — brimless, no charms, R150
   { src: '/images/spider-beanie-harlem.jpg', name: 'Harlem',   color: 'Red/Black', price: 'R150', id: 'SP04', accentColor: '#E01B24', kind: 'beanie' },
   { src: '/images/spider-beanie-halo.jpg',   name: 'Halo',     color: 'Pink',      price: 'R150', id: 'SP05', accentColor: '#FF2E93', kind: 'beanie' },
+  { src: '/images/spider-beanie-bronx.jpg',  name: 'Bronx',    color: 'Black/Red', price: 'R150', id: 'SP06', accentColor: '#E01B24', kind: 'beanie' },
 ]
 
 const SPIDER_COUNT = 16
@@ -286,7 +287,7 @@ export default function SpiderSection({ onProductClick }: { onProductClick: (p: 
             </span>
           </div>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.72)', textTransform: 'uppercase', marginTop: 12 }}>
-            5 PIECES · HAND-CROCHETED · FROM R150
+            6 PIECES · HAND-CROCHETED · FROM R150
           </p>
         </div>
 
