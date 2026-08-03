@@ -15,7 +15,17 @@ import { getSecretKey } from '../_lib/paystack.js'
 const OWNER_EMAIL = 'lrtthreadz@gmail.com'
 
 function signatureMatches(raw: string, header: string): boolean {
-  const expected = crypto.createHmac('sha512', getSecretKey()).update(raw, 'utf8').digest('hex')
+  let secret: string
+  try {
+    secret = getSecretKey()
+  } catch {
+    // No key configured, so no signature can be trusted. Reject rather than
+    // letting the throw surface as a 500 — Paystack retries on 5xx, and an
+    // unconfigured endpoint would collect an ever-growing retry backlog.
+    console.warn('[paystack] webhook received but PAYSTACK_SECRET_KEY is unset')
+    return false
+  }
+  const expected = crypto.createHmac('sha512', secret).update(raw, 'utf8').digest('hex')
   const a = Buffer.from(expected, 'utf8')
   const b = Buffer.from(header, 'utf8')
   // Length check first — timingSafeEqual throws on mismatched lengths.
