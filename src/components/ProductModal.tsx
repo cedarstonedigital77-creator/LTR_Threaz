@@ -10,6 +10,8 @@ export interface Product {
   price: string
   id: string
   featured?: boolean
+  /** Made in one colourway only — suppresses the custom-colour picker. */
+  fixedColour?: boolean
   // Grid-crop fields — for products shown from a collage image
   gridSrc?: string
   gridCol?: number   // 0 | 1 | 2
@@ -60,6 +62,11 @@ const COLOR_SWATCHES: Record<string, string> = {
   Red:          '#CC1414',
   Green:        '#1A7A2E',
   Lime:         '#A8D400',
+  // Spider Season. Two-tone pieces split the dot rather than fall back to the
+  // grey placeholder, which read as a broken swatch next to "BLACK/RED".
+  Pink:         '#FF2E93',
+  'Red/Black':  'linear-gradient(135deg, #E01B24 0 50%, #0A0A0A 50% 100%)',
+  'Black/Red':  'linear-gradient(135deg, #0A0A0A 0 50%, #E01B24 50% 100%)',
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -76,8 +83,10 @@ export default function ProductModal({ product, onClose, onCheckout, onFullLook,
   const [justAdded, setJustAdded]     = useState(false)
   const addToCartBtnRef               = useRef<HTMLButtonElement>(null)
 
-  // All products show the same full colour palette for custom orders
-  const customColors = ALL_BRAND_COLORS
+  // Most products can be custom-ordered in any brand colour. Pieces marked
+  // fixedColour are made in one colourway only, so offering a palette would
+  // promise something that cannot be crocheted.
+  const customColors = product?.fixedColour ? [] : ALL_BRAND_COLORS
 
   // ── Animation state via data attribute (no GSAP dep needed) ──────────────
   // CSS does the heavy lifting; we toggle data-state="open" / "closed"

@@ -11,15 +11,17 @@ import { type Product } from './ProductModal'
  *  otherwise a beanie would be announced to screen readers as a cap. */
 type SpiderPiece = Product & { kind: 'cap' | 'beanie' }
 
+// Every Spider Season piece is made in its one colourway only — the eye motif
+// is knitted in, not a swappable trim — so all carry fixedColour.
 const SPIDER_PIECES: SpiderPiece[] = [
   // Fitted caps — charm-studded, R400
-  { src: '/images/spider-cap-black.jpg',     name: 'Brooklyn', color: 'Black',     price: 'R400', id: 'SP01', accentColor: '#E01B24', kind: 'cap' },
-  { src: '/images/spider-cap-red.jpg',       name: 'Queens',   color: 'Red',       price: 'R400', id: 'SP02', accentColor: '#2B6BFF', kind: 'cap' },
-  { src: '/images/spider-cap-pink.jpg',      name: 'Ghost',    color: 'Pink',      price: 'R400', id: 'SP03', accentColor: '#FF4FA3', kind: 'cap' },
+  { src: '/images/spider-cap-black.jpg',     name: 'Brooklyn', color: 'Black',     price: 'R400', id: 'SP01', accentColor: '#E01B24', kind: 'cap',    fixedColour: true },
+  { src: '/images/spider-cap-red.jpg',       name: 'Queens',   color: 'Red',       price: 'R400', id: 'SP02', accentColor: '#2B6BFF', kind: 'cap',    fixedColour: true },
+  { src: '/images/spider-cap-pink.jpg',      name: 'Ghost',    color: 'Pink',      price: 'R400', id: 'SP03', accentColor: '#FF4FA3', kind: 'cap',    fixedColour: true },
   // Beanies — brimless, no charms, R150
-  { src: '/images/spider-beanie-harlem.jpg', name: 'Harlem',   color: 'Red/Black', price: 'R150', id: 'SP04', accentColor: '#E01B24', kind: 'beanie' },
-  { src: '/images/spider-beanie-halo.jpg',   name: 'Halo',     color: 'Pink',      price: 'R150', id: 'SP05', accentColor: '#FF2E93', kind: 'beanie' },
-  { src: '/images/spider-beanie-bronx.jpg',  name: 'Bronx',    color: 'Black/Red', price: 'R150', id: 'SP06', accentColor: '#E01B24', kind: 'beanie' },
+  { src: '/images/spider-beanie-harlem.jpg', name: 'Harlem',   color: 'Red/Black', price: 'R150', id: 'SP04', accentColor: '#E01B24', kind: 'beanie', fixedColour: true },
+  { src: '/images/spider-beanie-halo.jpg',   name: 'Halo',     color: 'Pink',      price: 'R150', id: 'SP05', accentColor: '#FF2E93', kind: 'beanie', fixedColour: true },
+  { src: '/images/spider-beanie-bronx.jpg',  name: 'Bronx',    color: 'Black/Red', price: 'R150', id: 'SP06', accentColor: '#E01B24', kind: 'beanie', fixedColour: true },
 ]
 
 const SPIDER_COUNT = 16
