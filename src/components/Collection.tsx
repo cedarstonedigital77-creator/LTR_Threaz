@@ -3,6 +3,7 @@ import { Pin, ShoppingBag } from 'lucide-react'
 import ProductModal, { type Product, type CartItem } from './ProductModal'
 import CheckoutModal from './CheckoutModal'
 import ComingSoon from './ComingSoon'
+import SpiderSection from './SpiderSection'
 import FullLookModal from './FullLookModal'
 import CartDrawer from './CartDrawer'
 import AddToCartBurst from './AddToCartBurst'
@@ -327,6 +328,12 @@ export default function Collection() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── SPIDER SEASON ── negative margin cancels this section's 16px
+           padding so the colour shift runs edge to edge ── */}
+      <div style={{ margin: 'clamp(48px, 6vw, 80px) -16px 0' }}>
+        <SpiderSection onProductClick={openModal} />
       </div>
 
       {/* ── MORE COMING SOON ── */}

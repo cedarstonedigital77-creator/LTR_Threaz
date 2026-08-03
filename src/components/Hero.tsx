@@ -1,7 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 
-const SLIDES = [
+type Slide = {
+  src: string
+  bg: string
+  label: string
+  ghostText: string
+  objectPos: string
+  /** Spider Season slides get the web overlay treatment. */
+  web?: boolean
+}
+
+const SLIDES: Slide[] = [
+  { src: '/images/hero-spider-black.jpg',   bg: '#8E0E18', label: 'SPIDER SEASON — BROOKLYN', ghostText: 'BROOKLYN', objectPos: 'center 28%', web: true },
+  { src: '/images/hero-spider-pink.jpg',    bg: '#D6216F', label: 'SPIDER SEASON — GHOST',    ghostText: 'GHOST',    objectPos: 'center 22%', web: true },
   { src: '/images/hero-beanie-closeup.jpg', bg: '#0A0A0F', label: 'SS001 — SLOUCHY',    ghostText: 'SLOUCHY',    objectPos: 'center 72%' },
   { src: '/images/hero-model.jpg',          bg: '#F72585', label: 'SS001 — BALACLAVA',  ghostText: 'BALACLAVA',  objectPos: 'center 15%' },
   { src: '/images/lifestyle-phone.jpg',     bg: '#0096C7', label: 'SS001 — FITTED CAP', ghostText: 'FITTED CAP', objectPos: 'center top' },
@@ -10,6 +22,38 @@ const SLIDES = [
 ]
 
 const N = SLIDES.length
+
+/** Web hanging from top-centre, sized to cover the viewport. */
+function WebOverlay() {
+  const angles = Array.from({ length: 11 }, (_, i) => (i / 10) * Math.PI)
+  const radii = [16, 30, 46, 64, 84, 106]
+  const pt = (r: number, a: number) => [Math.cos(a) * r, Math.sin(a) * r] as const
+
+  return (
+    <svg
+      viewBox="-60 -4 120 120"
+      preserveAspectRatio="xMidYMin slice"
+      width="100%"
+      height="100%"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g stroke="rgba(255,255,255,0.34)" strokeWidth="0.35">
+        {angles.map((a, i) => {
+          const [x, y] = pt(112, a)
+          return <line key={i} x1="0" y1="0" x2={x} y2={y} />
+        })}
+        {radii.map(r => (
+          <polyline
+            key={r}
+            points={angles.map(a => { const [x, y] = pt(r, a); return `${x},${y}` }).join(' ')}
+          />
+        ))}
+      </g>
+    </svg>
+  )
+}
 
 export default function Hero() {
   const [activeIndex, setActiveIndex] = useState(0)
@@ -67,6 +111,20 @@ export default function Hero() {
           transition: 'background-color 650ms cubic-bezier(0.65,0,0.35,1)',
         }}
       />
+
+      {/* ── Spider web — Spider Season slides only ── */}
+      <div
+        aria-hidden="true"
+        style={{
+          // Above the top vignette (z2), which would otherwise wash out the
+          // densest part of the web; below the product card (z4).
+          position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none',
+          opacity: slide.web ? 1 : 0,
+          transition: 'opacity 650ms cubic-bezier(0.65,0,0.35,1)',
+        }}
+      >
+        <WebOverlay />
+      </div>
 
       {/* ── Top colour vignette ── */}
       <div

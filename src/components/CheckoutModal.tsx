@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { X, MapPin, CheckCircle2, ChevronRight } from 'lucide-react'
+import { X, MapPin, CheckCircle2, ChevronRight, CreditCard, Loader2 } from 'lucide-react'
 import { type CartItem } from './ProductModal'
 import { sendOrderEmail } from '../lib/email'
+import { cardPaymentAvailable, initializePayment, openPaystack, verifyPayment } from '../lib/paystack'
 import PudoLockerPicker from './PudoLockerPicker'
 
 type Country = 'lesotho' | 'southafrica'
@@ -81,6 +82,15 @@ export default function CheckoutModal({
   const [sending, setSending]     = useState(false)
   const [copied, setCopied]       = useState(false)
   const [, setEmailSent]          = useState(false)
+  const [payState, setPayState]   = useState<'idle' | 'busy' | 'paid' | 'error'>('idle')
+  const [payError, setPayError]   = useState('')
+  const [paidChannel, setPaidChannel] = useState('')
+  // Kept apart from orderRef: the manual EFT/M-Pesa reference already went out in
+  // the order email, so a started-then-abandoned card attempt must not replace it.
+  const [cardRef, setCardRef]     = useState('')
+  // null = not yet known. The card button stays hidden until the server
+  // confirms it can actually charge, so a missing key never shows a dead button.
+  const [cardAvailable, setCardAvailable] = useState<boolean | null>(null)
   const overlayRef        = useRef<HTMLDivElement>(null)
   const panelRef          = useRef<HTMLDivElement>(null)
   const isOpen            = items.length > 0
@@ -91,6 +101,10 @@ export default function CheckoutModal({
       setStep(1)
       setOrderRef('')
       setEmailSent(false)
+      setPayState('idle')
+      setPayError('')
+      setPaidChannel('')
+      setCardRef('')
       setForm({ name: '', phone: '', email: '', country: '', province: '', district: '', address: '', lockerId: '' })
     }
   }, [isOpen])
@@ -112,6 +126,15 @@ export default function CheckoutModal({
       document.body.style.overflow     = ''
       document.body.style.paddingRight = ''
     }
+  }, [isOpen])
+
+  // Asked once per checkout, not per render. Result is cached server-side for
+  // a minute, so this costs almost nothing.
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+    cardPaymentAvailable().then(ok => { if (!cancelled) setCardAvailable(ok) })
+    return () => { cancelled = true }
   }, [isOpen])
 
   useEffect(() => {
@@ -142,6 +165,51 @@ export default function CheckoutModal({
       setCopied(true)
       setTimeout(() => setCopied(false), 2200)
     })
+  }
+
+  // Card payment. The server fixes the amount and only the server may declare
+  // an order paid — the popup's own success event is treated as a hint to go
+  // and verify, never as proof.
+  const payWithCard = async () => {
+    if (!form.country) return
+    setPayState('busy')
+    setPayError('')
+
+    try {
+      const init = await initializePayment({
+        items: items.map(i => ({
+          id: i.product.id,
+          quantity: i.quantity,
+          size: i.size,
+          customColor: i.customColor,
+        })),
+        customer: { name: form.name, email: form.email, phone: form.phone },
+        country: form.country,
+        location: form.country === 'lesotho'
+          ? `${form.district} — ${form.address}`
+          : `${form.province} · ${form.address}`,
+        lockerId: form.lockerId,
+      })
+
+      setCardRef(init.reference)
+      const outcome = await openPaystack(init)
+
+      if (outcome.kind === 'redirecting') return          // page is navigating away
+      if (outcome.kind === 'cancelled') { setPayState('idle'); return }
+
+      const result = await verifyPayment(outcome.reference)
+      if (!result.paid) {
+        setPayState('error')
+        setPayError('That payment did not go through. You can try again or pay manually below.')
+        return
+      }
+
+      setPaidChannel(result.channel ?? 'card')
+      setPayState('paid')
+    } catch (err) {
+      setPayState('error')
+      setPayError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    }
   }
 
   return (
@@ -481,10 +549,14 @@ export default function CheckoutModal({
               <div style={{ textAlign: 'center', padding: '6px 0 8px' }}>
                 <CheckCircle2 size={38} color="#E8F542" style={{ display: 'block', margin: '0 auto 12px' }} />
                 <p style={{ fontFamily: 'Anton, sans-serif', fontSize: 18, color: '#F5F0E8', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
-                  ORDER PLACED
+                  {payState === 'paid' ? 'PAYMENT RECEIVED' : 'ORDER PLACED'}
                 </p>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#C8B89A', margin: 0 }}>
-                  {form.country === 'lesotho' ? 'Complete your M-Pesa payment below to confirm' : 'Complete your EFT below to confirm'}
+                  {payState === 'paid'
+                    ? `Paid by ${paidChannel} — we're on it. No further action needed.`
+                    : cardAvailable === true
+                      ? (form.country === 'lesotho' ? 'Pay by card below, or use M-Pesa' : 'Pay by card below, or use EFT')
+                      : (form.country === 'lesotho' ? 'Complete your M-Pesa payment below to confirm' : 'Complete your EFT below to confirm')}
                 </p>
               </div>
 
@@ -500,14 +572,69 @@ export default function CheckoutModal({
                     Your Reference
                   </p>
                   <p style={{ fontFamily: 'Anton, sans-serif', fontSize: 18, color: '#E8F542', margin: 0, letterSpacing: '0.06em' }}>
-                    {orderRef}
+                    {payState === 'paid' ? cardRef : orderRef}
                   </p>
                 </div>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.18em', color: '#C8B89A', textTransform: 'uppercase', margin: 0, textAlign: 'right' }}>
-                  USE THIS AS<br />PAYMENT REF
+                  {payState === 'paid'
+                    ? <>QUOTE THIS IF<br />YOU CONTACT US</>
+                    : <>USE THIS AS<br />PAYMENT REF</>}
                 </p>
               </div>
 
+              {/* ── Card payment (Paystack) — only when the server can charge ── */}
+              {payState !== 'paid' && cardAvailable === true && (
+                <div>
+                  <button
+                    onClick={payWithCard}
+                    disabled={payState === 'busy'}
+                    style={{
+                      width: '100%', padding: '16px',
+                      background: payState === 'busy' ? 'rgba(232,245,66,0.35)' : '#E8F542',
+                      border: 'none', color: '#0A0A0A',
+                      fontFamily: 'Anton, sans-serif', fontSize: 13, letterSpacing: '0.2em', textTransform: 'uppercase',
+                      cursor: payState === 'busy' ? 'wait' : 'none',
+                      transition: 'background 200ms ease',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {payState === 'busy' ? (
+                      <>
+                        <Loader2 size={16} className="lrt-spin" /> OPENING SECURE CHECKOUT
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard size={16} /> PAY R{total} BY CARD
+                      </>
+                    )}
+                  </button>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#5A5040', textAlign: 'center', margin: '8px 0 0', letterSpacing: '0.06em' }}>
+                    Secured by Paystack · instant confirmation, no proof of payment needed
+                  </p>
+
+                  {payState === 'error' && (
+                    <p style={{
+                      fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F2A7C3',
+                      margin: '10px 0 0', padding: '10px 12px', lineHeight: 1.5,
+                      background: 'rgba(242,167,195,0.07)', border: '1px solid rgba(242,167,195,0.25)',
+                    }}>
+                      {payError}
+                    </p>
+                  )}
+
+                  {/* Divider */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0 0' }}>
+                    <div style={{ flex: 1, height: 1, background: 'rgba(245,240,232,0.10)' }} />
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.28em', color: '#5A5040', textTransform: 'uppercase' }}>
+                      or pay manually
+                    </span>
+                    <div style={{ flex: 1, height: 1, background: 'rgba(245,240,232,0.10)' }} />
+                  </div>
+                </div>
+              )}
+
+              {payState !== 'paid' && (<>
               {/* Payment details table */}
               <div style={{ border: '1px solid rgba(245,240,232,0.10)' }}>
                 <div style={{ padding: '10px 16px', background: 'rgba(255,255,255,0.025)', borderBottom: '1px solid rgba(245,240,232,0.07)' }}>
@@ -593,6 +720,7 @@ export default function CheckoutModal({
                   )}
                 </p>
               </div>
+              </>)}
             </div>
           )}
         </div>
@@ -719,6 +847,8 @@ export default function CheckoutModal({
           )}
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Card payers are already confirmed — no screenshot to send. */}
+              {payState !== 'paid' && (<>
               <a
                 href={whatsappUrl}
                 target="_blank"
@@ -740,6 +870,7 @@ export default function CheckoutModal({
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#5A5040', textAlign: 'center', margin: 0, letterSpacing: '0.06em' }}>
                 Opens WhatsApp · attach your payment screenshot
               </p>
+              </>)}
               <button
                 onClick={onClose}
                 style={{
@@ -768,6 +899,11 @@ export default function CheckoutModal({
           .co-overlay[data-state="open"] > .co-panel[data-state="open"] {
             transform: translateY(0) scale(1) !important;
             opacity: 1 !important;
+          }
+          @keyframes lrt-spin { to { transform: rotate(360deg); } }
+          .lrt-spin { animation: lrt-spin 900ms linear infinite; }
+          @media (prefers-reduced-motion: reduce) {
+            .lrt-spin { animation-duration: 2400ms; }
           }
         `}</style>
       </div>
